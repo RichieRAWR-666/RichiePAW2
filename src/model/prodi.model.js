@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 
-const schema = new mongoose.schema(
+
+const schema = new mongoose.Schema(
     {
     kode : {
         type : String,
@@ -18,9 +19,11 @@ fakultas: {
       required: true,
     },
 
-    timestamps : true,
+   
+},{
+    timestamps: true,
 }
 );
 
-const ProdiModel = mongo.model("prodi", schema)
+const ProdiModel = mongoose.model("prodi", schema)
 export default ProdiModel
