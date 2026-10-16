@@ -23,4 +23,4 @@ router.put('/prodi/:id', ProdiController.update)
 router.patch('/prodi/:id', ProdiController.update) 
 router.delete('/prodi/:id', ProdiController.delete) 
 
-export default router
+export default router   
