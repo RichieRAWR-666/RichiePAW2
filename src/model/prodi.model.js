@@ -1,29 +1,27 @@
-import mongoose from 'mongoose';
-
+import mongoose from 'mongoose'
 
 const schema = new mongoose.Schema(
-    {
-    kode : {
-        type : String,
-        required : true,
-        unique : true
+  {
+    kode: {
+      type: String,
+      required: true,
+      unique: true,
     },
     nama_prodi: {
-        type : String,
-        required : true,
-        unique : true
+      type: String,
+      required: true,
+      unique: true,
     },
-fakultas: {
+    fakultas: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "fakultas", 
+      ref: 'fakultas',
       required: true,
     },
-
-   
-},{
+  },
+  {
     timestamps: true,
-}
-);
+  },
+)
 
-const ProdiModel = mongoose.model("prodi", schema)
+const ProdiModel = mongoose.model('prodi', schema)
 export default ProdiModel
