@@ -1,100 +1,198 @@
-import FakultasModel from '../model/fakultas.model.js'
-import { StoreFakultasSchema, UpdateFakultasSchema } from '../schemas/fakultas.schema.js'
-import { apiResponse, apiResponseValidation } from '../utils/response.js'
 
+import FakultasModel from '../model/fakultas.model.js'
+import {
+  StoreFakultasSchema,
+  UpdateFakultasSchema
+} from '../schemas/fakultas.schema.js'
+import {
+  apiResponse,
+  apiResponseValidation
+} from '../utils/response.js'
 
 class FakultasController {
   static async index(req, res) {
-    const {search, sort, sortBy = "createdAt"} = req.query
+    const {
+      search,
+      sort,
+      sortBy = 'createdAt',
+      page = 1,
+      limit = 10
+    } = req.query
 
-    const filter ={}
-    console.log('sortBy:', req.query.sortBy)
-    const sortOptions = {
-      createdAt: req.query.sortBy === 'desc' ? -1 : 1
+    const currentPage = Math.max(1, parseInt(page, 10) || 1)
+    const perPage = Math.max(1, parseInt(limit, 10) || 10)
+    const skip = (currentPage - 1) * perPage
+
+    const allowedSortFields = [
+      'name',
+      'createdAt',
+      'updatedAt'
+    ]
+
+    const sortField = allowedSortFields.includes(sortBy)
+      ? sortBy
+      : 'createdAt'
+
+    const filter = {}
+
+    if (search) {
+      filter.name = {
+        $regex: search,
+        $options: 'i'
+      }
     }
 
+    const sortOptions = {
+      [sortField]: sort === 'desc' ? -1 : 1
+    }
 
-if (search) {
-  filter.name = {
-    $regex: search,
-    $options: "i"
-  }
-}
+    const [listFakultas, totalData] = await Promise.all([
+      FakultasModel.find(filter)
+        .select({
+          _id: 1,
+          name: 1,
+          createdAt: 1,
+          updatedAt: 1
+        })
+        .sort(sortOptions)
+        .skip(skip)
+        .limit(perPage),
 
-    const listFakultas = await FakultasModel.find(filter)
-    .select({
-      _id:1,
-      name:1
+      FakultasModel.countDocuments(filter)
+    ])
+
+    const totalPages = Math.ceil(totalData / perPage)
+
+    return apiResponse({
+      res,
+      status: 200,
+      data: {
+        items: listFakultas,
+        pagination: {
+          totalData,
+          totalPages,
+          currentPage,
+          perPage,
+          hasNextPage: currentPage < totalPages,
+          hasPrevPage: currentPage > 1
+        }
+      }
     })
-    .sort(sortOptions);
-    return apiResponse({ res, status: 200, data: listFakultas })
   }
 
   static async show(req, res) {
     const fakultasId = req.params.id
+
     const fakultas = await FakultasModel.findById(fakultasId)
 
     if (!fakultas) {
-      return apiResponse({ res, status: 404, message: 'Fakultas tidak ditemukan' })
+      return apiResponse({
+        res,
+        status: 404,
+        message: 'Fakultas tidak ditemukan'
+      })
     }
 
-    return apiResponse({ res, status: 200, data: fakultas })
+    return apiResponse({
+      res,
+      status: 200,
+      data: fakultas
+    })
   }
 
   static async store(req, res) {
     const result = StoreFakultasSchema.safeParse(req.body)
-        if(!result.success){
-            return apiResponseValidation({
-                res,
-                errors: result.error
-            })
-        }
-    const {name}=result.data
+
+    if (!result.success) {
+      return apiResponseValidation({
+        res,
+        errors: result.error
+      })
+    }
+
+    const { name } = result.data
 
     if (!name) {
-      return apiResponse({ res, status: 400, message: 'Nama fakultas wajib diisi' })
+      return apiResponse({
+        res,
+        status: 400,
+        message: 'Nama fakultas wajib diisi'
+      })
     }
 
     const newFakultas = await FakultasModel.create({ name })
-    return apiResponse({ res, status: 201, data: newFakultas })
+
+    return apiResponse({
+      res,
+      status: 201,
+      data: newFakultas
+    })
   }
 
   static async update(req, res) {
     const fakultasId = req.params.id
+
     const result = UpdateFakultasSchema.safeParse(req.body)
-        if(!result.success){
-            return apiResponseValidation({
-                res,
-                errors: result.error
-            })
-        }
 
-    const {name}=result.data
+    if (!result.success) {
+      return apiResponseValidation({
+        res,
+        errors: result.error
+      })
+    }
 
-    const exists = await FakultasModel.exists({ _id: fakultasId })
+    const { name } = result.data
+
+    const exists = await FakultasModel.exists({
+      _id: fakultasId
+    })
+
     if (!exists) {
-      return apiResponse({ res, status: 404, message: 'Fakultas tidak ditemukan' })
+      return apiResponse({
+        res,
+        status: 404,
+        message: 'Fakultas tidak ditemukan'
+      })
     }
 
     const updateFakultas = await FakultasModel.findOneAndUpdate(
       { _id: fakultasId },
       { name },
-      { new: true }
+      { new: true, runValidators: true }
     )
 
-    return apiResponse({ res, status: 200, data: updateFakultas })
+    return apiResponse({
+      res,
+      status: 200,
+      data: updateFakultas
+    })
   }
 
   static async delete(req, res) {
     const fakultasId = req.params.id
 
-    const exists = await FakultasModel.exists({ _id: fakultasId })
+    const exists = await FakultasModel.exists({
+      _id: fakultasId
+    })
+
     if (!exists) {
-      return apiResponse({ res, status: 404, message: 'Fakultas tidak ditemukan' })
+      return apiResponse({
+        res,
+        status: 404,
+        message: 'Fakultas tidak ditemukan'
+      })
     }
 
-    await FakultasModel.findOneAndDelete({ _id: fakultasId })
-    return apiResponse({ res, status: 200, message: 'Fakultas berhasil dihapus', data: null })
+    await FakultasModel.findOneAndDelete({
+      _id: fakultasId
+    })
+
+    return apiResponse({
+      res,
+      status: 200,
+      message: 'Fakultas berhasil dihapus',
+      data: null
+    })
   }
 }
 
