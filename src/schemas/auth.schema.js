@@ -10,7 +10,7 @@ const passwordSchema = z.string()
     }
 )
 
-const registerSchema = zod.object({
+export const registerSchema = zod.object({
     name: z.strig().trim().min(3, 'minimal 3 karakter'),
     email: z.email(),
     password : z.string().trim().min(8,"password minimal 8 karakter")

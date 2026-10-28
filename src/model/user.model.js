@@ -1,6 +1,6 @@
-const{defsult: mongoose} = require('mongoose');
+import mongoose from "mongoose";
 
-const schema = new mongoose.Schema(
+const schema = new mongoose.schema(
     {
         name:{
             type: String,
